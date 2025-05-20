@@ -30,7 +30,7 @@ python -m pip --version
 Development is done in a virtual environment.  
 Create virtual environment:  
 ```bash
-py -m venv "${_project_root}/.venv/Scripts/activate"
+py -m venv "${_project_root}/.venv"
 # Adding src and tst in PYTHONPATH
 echo "export PYTHONPATH=\"${_project_root}/src\":\"${_project_root}/tst\"" >> "${_project_root}/.venv/Scripts/activate"
 ```
