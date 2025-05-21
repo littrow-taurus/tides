@@ -1,41 +1,56 @@
+# coding: utf-8
+"""
+This module contains all that deals with harmonics used by Darwin/Doodle models.
+
+The Doodson arguments are:
+tau = 15°*t + h - s, mean Lunar time, the Greenwich hour angle of the mean Moon plus 12 hours.  
+s = 277.0248 + 481267.8906*T + 0.0020*T^2 + ..., mean longitude of the Moon.  
+h = 280.1895 + 36000.7689*T + 0.0003*T^2 + ..., mean longitude of the Sun.  
+p = 334.3853 + 4069.0340*T — 0.0103*T^2 + ..., longitude of the Moon's mean perigee.  
+N = 100.8432 + 1934.420*T — 0.0021*T^2 + ..., negative of the longitude of the Moon's mean ascending node on the ecliptic.  
+P1 = 281.2209 + 1.7192*T + 0.0005*T^2 + ..., longitude of the Sun's mean perigee.  
+where T is a Julian century of 36,525 mean solar days (start 1899-12-31=T0). So T=t/36525*24 if t is hours.
+
+For example, lets see s, and how to compute s speed ds/dt.  
+s = 277.0248 + 481267.8906*(t/36525*24) + 0.0020*(t/36525*24)^2 + ..., where t is time in hours from T0.  
+ds/dt = 481267.8906/(36525*24) + 0.0020*2*(t/36525*24)
+ds/dt = (481267.8906+2*0.0020*t)/36525*24
+
+tau=15°*t+h-s  
+dtau/dt=15+dh/dt-ds/dt  
+
+In the program variables such as ds/dt are called ds.
+"""
+
 import logging
 import datetime
 
 logger=logging.getLogger(__name__)
 
 APPLY_TIME_CORRECTION=True
-# See below
-# tau=15°*t+h-s  
-# s = 277.0248 + 481267.8906*T + 0.0020*T^2 + ...,  
-# h = 280.1895 + 36000.7689*T + 0.0003*T^2 + ...,  
-# p = 334.3853 + 4069.0340*T — 0.0103*T^2 + ...,  
-# N = 100.8432 + 1934.420*T — 0.0021*T^2 + ...,  
-# P1 = 281.2209 + 1.7192*T + 0.0005*T^2 + ...,  
-# where T is a Julian century of 36,525 mean solar days (start 1899-12-31=T0). So T=t/36525*24 if t is hours.
-#
-# s = 277.0248 + 481267.8906*(t/36525*24) + 0.0020*(t/36525*24)^2 + ..., where t is time in hours from T0.  
-# ds/dt = 481267.8906/(36525*24) + 0.0020*2*(t/36525*24)
-# ds/dt = (481267.8906+2*0.0020*t)/36525*24
-#
-# tau=15°*t+h-s
-# dtau/dt=15+dh/dt-ds/dt
-#
-# In the program ds/dt is called ds.
+"Boolean that apply time correction in T^2 or not."
 T0=datetime.datetime(1900,1,1,hour=0,minute=0,second=0)
 _t=0
 if APPLY_TIME_CORRECTION:
     _t=(datetime.datetime.now()-T0).days/36525
-ds=(481267.8906+2*0.0020*_t)/36525/24
-dh=(36000.7689+2*0.0003*_t)/36525/24
-dp=(4069.0340+2*0.0103*_t)/36525/24
-dN=(1934.420+2*0.0021*_t)/36525/24
-dp1=(1.71920+2*0.0005*_t)/36525/24
-dtau=15+dh-ds
 
-class DoodsonException(Exception):
+ds=(481267.8906+2*0.0020*_t)/36525/24
+"Speed of longitude of the Moon (°/h)."
+dh=(36000.7689+2*0.0003*_t)/36525/24
+"Speed of longitude of the Sun (°/h)."
+dp=(4069.0340+2*0.0103*_t)/36525/24
+"Speed of longitude of the Moon's mean perigee (°/h)."
+dN=(1934.420+2*0.0021*_t)/36525/24
+"Negative speed of longitude of the Moon's mean ascending node on the ecliptic (°/h)."
+dp1=(1.71920+2*0.0005*_t)/36525/24
+"Speed of longitude of the Sun's mean perigee (°/h)."
+dtau=15+dh-ds
+"Speed of moon (°/h)."
+
+class HarmonicException(Exception):
     pass
 
-class Doodson:
+class Harmonic:
     """
     Holds an harmonic based on its Doodson numbers.
 
@@ -72,19 +87,18 @@ class Doodson:
         """
         logging.debug(n)
         if len(n) != 6:
-            raise DoodsonException(f"Doodson array of numbers is wrong length: {len(n)}")
+            raise HarmonicException(f"Doodson array of numbers is wrong length: {len(n)}")
         if n[0]<0 :
-            raise DoodsonException(f"Doodson s number is negative: {n[0]}")
+            raise HarmonicException(f"Doodson s number is negative: {n[0]}")
         for i in range(1,6): # range(1,6)=1 2 3 4 5
             logging.debug(f"n{i}={n[i]}")
             if n[i] < -5 or n[i] >= 5 :
-                raise DoodsonException(f"Doodson value out of bounds: n{i}={n[i]}")
+                raise HarmonicException(f"Doodson value out of bounds: n{i}={n[i]}")
         self.n=n
 
-    def get_frequency(self):
+    def get_speed(self):
         """
-        Returns frequency in °/h.
-        TODO: This should be called speed (rotation speed or angular speed).
+        Returns rotation speed in °/h.
 
         Documentation
         -------------
@@ -112,15 +126,15 @@ class Doodson:
         """
         return self.n[0]*dtau + self.n[1]*ds + self.n[2]*dh + self.n[3]*dp + self.n[4]*dN + self.n[5]*dp1
 
-def get_by_digits(n0:int,n1:int,n2:int,n3:int,n4:int,n5:int) -> Doodson:
+def get_by_digits(n0:int,n1:int,n2:int,n3:int,n4:int,n5:int) -> Harmonic:
     """
-    Creates a Doodson object from 6 digits from 0 to 9.
+    Creates an Harmonic object from 6 Doodson digits from 0 to 9.
     """
-    return Doodson([n0,n1-5,n2-5,n3-5,n4-5,n5-5])
+    return Harmonic([n0,n1-5,n2-5,n3-5,n4-5,n5-5])
 
-def get_by_number(number:int) -> Doodson:
+def get_by_number(number:int) -> Harmonic:
     """
-    Creates a Doodson object from a Doodson number made of 6 digits. Thus 000000 ≤ number ≤ 999999. 
+    Creates a Harmonic object from a Doodson number made of 6 digits. Thus 000000 ≤ number ≤ 999999. 
     """
     n=[None]*6
     n[0]=number//100000
@@ -130,136 +144,136 @@ def get_by_number(number:int) -> Doodson:
     n[4]=((number%100)//10)-5
     n[5]=(number%10)-5
     logging.debug(n)
-    return Doodson(n)
+    return Harmonic(n)
     
 # Harmonics constants
 
 # Long period tides
-# M0    Lunar constant (1)(3)
 M0=get_by_digits(0,5,5, 5,5,5)
-# S0    Solar constant (1)(3)
+"""M0 Lunar constant (1)(3)."""
 S0=get_by_digits(0,5,5, 5,5,5)
-# Sa    Solar annual (1)(2 difference)
+"""S0 Solar constant (1)(3)."""
 Sa=get_by_digits(0,5,6, 5,5,4)
-# Ssa   Solar semiannual (1)(2)(3)
+"""Sa Solar annual (1)(2 difference)."""
 Ssa=get_by_digits(0,5,7, 5,5,5)
-# Sta   (1)
+"""Ssa Solar semiannual (1)(2)(3)."""
 Sta=get_by_digits(0,5,8, 5,5,4)
-# Msm   (1)
+"""Sta (1)."""
 Msm=get_by_digits(0,6,3, 6,5,5)
-# Mm    Lunar monthly (1)(2)(3)
+"""Msm (1)."""
 Mm=get_by_digits(0,6,5, 4,5,5)
-# Msf   Lunisolar synodic fortnightly (1)(2)
+"""Mm Lunar monthly (1)(2)(3)."""
 Msf=get_by_digits(0,7,3, 5,5,5)
-# Mf    Lunisolar fortnightly (1)(2)(3)
+"""Msf Lunisolar synodic fortnightly (1)(2)."""
 Mf=get_by_digits(0,7,5, 5,5,5)
-# Mstm  (1)
+"""Mf Lunisolar fortnightly (1)(2)(3)."""
 Mstm=get_by_digits(0,8,3, 6,5,5)
-# Mtm   (1)
+"""Mstm (1)."""
 Mtm=get_by_digits(0,8,5, 4,5,5)
-# Msqm  (1)
+"""Mtm (1)."""
 Msqm=get_by_digits(0,9,3, 5,5,5)
-# nodal_M0_1  18.613 years, period of lunar node precession (3)
+"""Msqm (1)."""
 nodal_M0_1=get_by_digits(0,5,5, 5,6,5)
-# nodal_M0_2  (3)
+"""nodal_M0_1 18.613 years, period of lunar node precession (3)."""
 nodal_M0_2=get_by_digits(0,7,5, 5,6,5)
+"""nodal_M0_2 (3)."""
 
 # Diurnal tides
-# 2Q1   Larger elliptic diurnal (1)(2), source difference: speed in (1) 12,8442862 WRONG.
 _2Q1=get_by_digits(1,2,5, 7,5,5)
-# sigma1    (1)
+"""2Q1 Larger elliptic diurnal (1)(2), source difference: speed in (1) 12,8442862 WRONG."""
 sigma1=get_by_digits(1,2,7, 5,5,5)
-# Q1    Larger lunar elliptic diurnal (1)(2)
+"""sigma1 (1)."""
 Q1=get_by_digits(1,3,5, 6,5,5)
-# rau1 	Larger lunar evectional diurnal (1)(2), source difference: naming in (2) rau.
+"""Q1 Larger lunar elliptic diurnal (1)(2)."""
 rau1=get_by_digits(1,3,7, 4,5,5)
-# O1    Lunar diurnal (1)(2)(3)
+"""rau1 Larger lunar evectional diurnal (1)(2), source difference: naming in (2) rau."""
 O1=get_by_digits(1,4,5, 5,5,5)
-# tau1 	(1)
+"""O1 Lunar diurnal (1)(2)(3)."""
 tau1=get_by_digits(1,4,7, 5,5,5)
+"""tau1 (1)."""
 # M11   DEPRECTATED (1)
 # M12   DEPRECTATED (1)
-# M1    Smaller lunar elliptic diurnal (2)
 M1=get_by_digits(1,5,5, 5,5,5)
-# khi1 	(1)
+"""M1 Smaller lunar elliptic diurnal (2)."""
 khi1=get_by_digits(1,5,7, 4,5,5)
-# pi1 	(1)
+"""khi1 (1)."""
 pi1=get_by_digits(1,6,2, 5,5,6)
-# P1    Solar diurnal (1)(2)(3)
+"""pi1 (1)."""
 P1=get_by_digits(1,6,3, 5,5,5)
+"""P1 Solar diurnal (1)(2)(3)."""
 # K1L   DUPLICATE (1)
 # K1S   DUPLICATE (1)(3)
 # K1M   DUPLICATE (3)
-# K1    Lunisolar diurnal  (2)(3)
 K1=get_by_digits(1,6,5, 5,5,5)
-# psi1 	(1)
+"""K1 Lunisolar diurnal  (2)(3)."""
 psi1=get_by_digits(1,6,6, 5,5,4)
-# phi1 	(1)
+"""psi1 (1)."""
 phi1=get_by_digits(1,6,7, 5,5,5)
-# teta1 (1)
+"""phi1 (1)."""
 teta1=get_by_digits(1,7,3, 6,5,5)
-# J1    Smaller lunar elliptic diurnal (1)(2)
+"""teta1 (1)."""
 J1=get_by_digits(1,7,5, 4,5,5)
+"""J1 Smaller lunar elliptic diurnal (1)(2)."""
 # SO1   DATA INCORRECT (1)
-# OO1   Lunar diurnal (1)(2), source difference: in (1) 185655 wrong.
 OO1=get_by_digits(1,8,5, 5,5,5)
-# nu1 	(1)
+"""OO1 Lunar diurnal (1)(2), source difference: in (1) 185655 wrong."""
 nu1=get_by_digits(1,9,5, 4,5,5)
-# S1    Solar diurnal (2)
+"""nu1 (1)."""
 S1=get_by_digits(1,6,4, 5,5,5)
+"""S1 Solar diurnal (2)."""
 # nodal_O1  DATA INCORRECT (3)
 # nodal_K1M DATA INCORRECT (3)
 
 # Semi-diurnal tides
 # epsilon2  DATA INCORRECT (1)
-# 2N2   Lunar elliptical semidiurnal second-order (1)(2), source difference: in (1) 27,9692084 wrong.
 _2N2=get_by_digits(2,3,5, 7,5,5)
-# mu2 	Variational (1)(2)
+"""2N2 Lunar elliptical semidiurnal second-order (1)(2), source difference: in (1) 27,9692084 wrong."""
 mu2=get_by_digits(2,3,7, 5,5,5)
-# N2    Larger lunar elliptic semidiurnal (1)(2)(3)
+"""mu2 Variational (1)(2)."""
 N2=get_by_digits(2,4,5, 6,5,5)
-# nu2 	Larger lunar evectional (1)(2)
+"""N2 Larger lunar elliptic semidiurnal (1)(2)(3)."""
 nu2=get_by_digits(2,4,7, 4,5,5)
-# M2    Principal lunar semidiurnal (1)(2)(3)
+"""nu2 Larger lunar evectional (1)(2)."""
 M2=get_by_digits(2,5,5, 5,5,5)
-# lambda2 	Smaller lunar evectional (1)(2)
+"""M2 Principal lunar semidiurnal (1)(2)(3)."""
 lambda2=get_by_digits(2,6,3, 6,5,5)
-# L2    Smaller lunar elliptic semidiurnal (1)(2), source difference: in (1) 29,5377626 wrong.
+"""lambda2 Smaller lunar evectional (1)(2)."""
 L2=get_by_digits(2,6,5, 4,5,5)
-# T2    Larger solar elliptic (1)(2), source difference: in (1) 29,5589333 wrong.
+"""L2 Smaller lunar elliptic semidiurnal (1)(2), source difference: in (1) 29,5377626 wrong."""
 T2=get_by_digits(2,7,2, 5,5,6)
-# S2    Principal solar semidiurnal (1)(2)(3)
+"""T2 Larger solar elliptic (1)(2), source difference: in (1) 29,5589333 wrong."""
 S2=get_by_digits(2,7,3, 5,5,5)
-# R2    Smaller solar elliptic 	274 554 30.0410667 (1)(2 difference)
+"""S2 Principal solar semidiurnal (1)(2)(3)."""
 R2=get_by_digits(2,7,4, 5,5,4)
+"""R2 Smaller solar elliptic (1)(2 difference)."""
 # K2S   DUPLICATE (1)(3)
 # K2L   DUPLICATE (1)
 # K2M   DUPLICATE (3)
-# K2    Lunisolar semidiurnal (2)(3)
 K2=get_by_digits(2,7,5, 5,5,5)
-# 2SM2  Shallow water semidiurnal (2)
+"""K2 Lunisolar semidiurnal (2)(3)."""
 _2SM2=get_by_digits(2,9,1, 5,5,5)
+"""2SM2 Shallow water semidiurnal (2)."""
 
 # Short period tides
-# M4    Shallow water overtides of principal lunar (2)
 M4=get_by_digits(4,5,5, 5,5,5)
-# M6    Shallow water overtides of principal lunar (2)
+"""M4 Shallow water overtides of principal lunar (2)."""
 M6=get_by_digits(6,5,5, 5,5,5)
-# MK3   Shallow water terdiurnal (2)
+"""M6 Shallow water overtides of principal lunar (2)."""
 MK3=get_by_digits(3,6,5, 5,5,5)
-# S4    Shallow water overtides of principal solar (2)
+"""MK3 Shallow water terdiurnal (2)."""
 S4=get_by_digits(4,9,1, 5,5,5)
-# MN4   Shallow water quarter diurnal (2)
+"""S4 Shallow water overtides of principal solar (2)."""
 MN4=get_by_digits(4,4,5, 6,5,5)
+"""MN4 Shallow water quarter diurnal (2)."""
 # S6    Shallow water overtides of principal solar DUPLICATE? (2)
-# M3    Lunar terdiurnal (2)
 M3=get_by_digits(3,5,5, 5,5,5)
-# 2MK3  Shallow water terdiurnal (2)
+"""M3 Lunar terdiurnal (2)."""
 _2MK3=get_by_digits(3,4,5, 5,5,5)
-# M8    Shallow water eighth diurnal (2)
+"""2MK3 Shallow water terdiurnal (2)."""
 M8=get_by_digits(8,5,5, 5,5,5)
-# MS4   Shallow water quarter diurnal (2)
+"""M8 Shallow water eighth diurnal (2)."""
 MS4=get_by_digits(4,7,3, 5,5,5)
+"""MS4 Shallow water quarter diurnal (2)."""
 
 # (1): Source [Chapitre 4 Le potentiel générateur des marées](http://fabien.lefevre.free.fr/These_HTML/doc0004.htm)
 # (2): Source [Theory of tides - Wikipedia](https://en.wikipedia.org/wiki/Theory_of_tides)
