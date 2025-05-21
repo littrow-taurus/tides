@@ -9,16 +9,16 @@ from harmonics import HarmonicException
 logger=logging.getLogger(__name__)
 
 class TestHarmonics(unittest.TestCase):
-    def test_create_Doodson(self):
+    def test_create_Harmonic(self):
         """
-        Test nominal creation of Doodson.
+        Test nominal creation of Harmonic.
         """
         d=Harmonic([1,0,0, 1,0,0])
         self.assertEqual(d.n,[1,0,0, 1,0,0])
 
-    def test_Doodson_len_numbers(self):
+    def test_Harmonic_len_numbers(self):
         """
-        Test DoodsonException raised when array of numbers length different from 6.
+        Test HarmonicException raised when array of numbers length different from 6.
         """
         # len=5
         with self.assertRaises(HarmonicException) as cm:
@@ -31,7 +31,7 @@ class TestHarmonics(unittest.TestCase):
         e=cm.exception
         print(e)
 
-    def test_Doodson_values_limits(self):
+    def test_Harmonic_values_limits(self):
         """
         Test values are proper intervals: 
         s ≥ 0, −5 ≤ mi < 5
@@ -64,9 +64,9 @@ class TestHarmonics(unittest.TestCase):
         with self.assertRaises(HarmonicException):
             Harmonic([0,0,0, 0,0,5])
 
-    def test_Doodson_get_frequency(self):
+    def test_Harmonic_get_speed(self):
         """
-        Checks sample of Doodson's frequencies.
+        Checks sample of Harmonic's speeds.
         """
         # 135 655 -> 13.39866°/hr
         d=Harmonic([1,-2,0, 1,0,0])
@@ -86,7 +86,7 @@ class TestHarmonics(unittest.TestCase):
 
     def test_get_by_digits(self):
         """
-        Checks getting Doodson instance by numbers.
+        Checks getting Harmonic instance by numbers.
         """
         n0=random.randint(0,3)
         n1=random.randint(0,9)
@@ -99,7 +99,7 @@ class TestHarmonics(unittest.TestCase):
 
     def test_get_by_number(self):
         """
-        Checks getting Doodson instance by string.
+        Checks getting Harmonic instance by string.
         """
         d=harmonics.get_by_number(155555)
         self.assertEqual(d.n,[1,0,0,0,0,0])
@@ -108,7 +108,7 @@ class TestHarmonics(unittest.TestCase):
 
     def test_get_by_number_wrong(self):
         """
-        Checks getting Doodson instance by string.
+        Checks getting Harmonic instance by string.
         """
         with self.assertRaises(HarmonicException) as cm:
             harmonics.get_by_number(-1)

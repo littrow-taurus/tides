@@ -1,3 +1,5 @@
+# coding: utf-8
+
 MAJOR=0
 MINOR=0
 BUILD=2

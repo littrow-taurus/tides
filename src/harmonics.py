@@ -74,7 +74,7 @@ class Harmonic:
     - [Transformation between the International Terrestrial Reference System and the Geocentric Celestial Reference System](https://iers-conventions.obspm.fr/content/chapter5/icc5.pdf)
     """
 
-    def __init__(self,n:list):
+    def __init__(self,n:list[int]):
         """
         Constructor.
         

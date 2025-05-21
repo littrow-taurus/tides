@@ -13,6 +13,46 @@ More complex models with many more harmonics are described here:
 - [Transformation between the International Terrestrial Reference System and the Geocentric Celestial Reference System (10 August 2012)](https://iers-conventions.obspm.fr/content/chapter5/icc5.pdf)
 Those models can be used during further evolutions to improve models.
 
+The admited order of importance of harmonics is:
+1. M2
+2. S2
+3. N2
+4. K1
+5. M4
+6. O1
+7. M6
+8. MK3
+9. S4
+10. MN4
+11. nu2
+12. S6
+13. mu2
+14. 2N2
+15. OO1
+16. lambda2
+17. S1
+18. M1
+19. J1
+20. Mm
+21. Ssa
+22. Sa
+23. MSf
+24. Mf
+25. rau1
+26. Q1
+27. T2
+28. R2
+29. 2Q1
+30. P1
+31. 2SM2
+32. M3
+33. L2
+34. 2MK3
+35. K2
+36. M8
+37. MS4
+Source: [Theory of tides - Wikipedia](https://en.wikipedia.org/wiki/Theory_of_tides)
+
 ## Documentation
 - [Project setup](doc/setup.md)
 
