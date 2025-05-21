@@ -6,6 +6,7 @@ This module deals with Darwin/Doodson models, i.e a list of harmonics that predi
 from harmonics import Harmonic
 import harmonics as H
 from datetime import datetime
+import math
 
 class Model:
     """
@@ -24,13 +25,30 @@ class Model:
         return self.harmonics
     
     def get_amplitudes(self):
-        return self.harmonics
+        """
+        Amplitudes in m matching order with harmonics.
+        """
+        return self.amplitudes
     
     def get_phases(self):
-        return self.harmonics
+        """
+        Phases in ° matching order with harmonics.
+        """
+        return self.phases
     
     def get_height(self,t:datetime):
-        raise Exception("Not implemented yet!")
+        height=0.0
+        for n in range(len(self.harmonics)):
+            # speed is °/h
+            # dt=(t-H.T0) is timedelta
+            # dh=dt.days*24+dt.seconds/3600 is hours (float) from H.T0.
+            # speed*dh is °
+            # phase is °
+            dt=t-H.T0
+            dh=dt.days*24+dt.seconds/3600
+            x=self.harmonics[n].get_speed()*dh + self.phases[n]
+            height+=self.amplitudes[n] * math.cos(math.radians(x))
+        return height
     
 class Model_N3(Model):
     def __init__(self):
