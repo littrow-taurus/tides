@@ -22,6 +22,7 @@ dtau/dt=15+dh/dt-ds/dt
 In the program variables such as ds/dt are called ds.
 """
 
+import conf_logging
 import logging
 import datetime
 from datetime import datetime
@@ -78,33 +79,32 @@ class Harmonic:
 
     - [Lecture 1: Introduction to ocean tides, Myrl Hendershott](https://www.whoi.edu/cms/files/lecture01_21351.pdf)
     - [Transformation between the International Terrestrial Reference System and the Geocentric Celestial Reference System](https://iers-conventions.obspm.fr/content/chapter5/icc5.pdf)
+
+    :param n: List Array of the 6 harmonic components: s mj1 mj2 mj3 mj4 mj5 (as seen above).
+    :type n: list[int]
     """
 
     def __init__(self,n:list[int]):
         """
         Constructor.
         
-        Parameters
-        ----------
-        n: list
-            Array of the 6 harmonic components: s mj1 mj2 mj3 mj4 mj5  
-            s ≥ 0
-            −5 ≤ mji < 5
+        :param n: List Array of the 6 harmonic components: s mj1 mj2 mj3 mj4 mj5. Where s ≥ 0, and −5 ≤ mji < 5.
+        :type n: list[int]
         """
-        logging.debug(n)
+        logger.debug(n)
         if len(n) != 6:
             raise HarmonicException(f"Doodson array of numbers is wrong length: {len(n)}")
         if n[0]<0 :
             raise HarmonicException(f"Doodson s number is negative: {n[0]}")
         for i in range(1,6): # range(1,6)=1 2 3 4 5
-            logging.debug(f"n{i}={n[i]}")
+            logger.debug(f"n{i}={n[i]}")
             if n[i] < -5 or n[i] >= 5 :
                 raise HarmonicException(f"Doodson value out of bounds: n{i}={n[i]}")
         self.n=n
 
-    def get_speed(self):
+    def get_speed(self) -> float:
         """
-        Returns rotation speed in °/h.
+        Returns rotation speed in °/h for the current harmonic.
 
         Documentation
         -------------
@@ -129,18 +129,41 @@ class Harmonic:
 
         - [Lecture 1: Introduction to ocean tides](https://www.whoi.edu/cms/files/lecture01_21351.pdf)
         - [Chapitre 4 Le potentiel générateur des marées](http://fabien.lefevre.free.fr/These_HTML/doc0004.htm)
+
+        :return: Rotation speed in °/h.
+        :rtype: float
         """
         return self.n[0]*dtau + self.n[1]*ds + self.n[2]*dh + self.n[3]*dp + self.n[4]*dN + self.n[5]*dp1
 
 def get_by_digits(n0:int,n1:int,n2:int,n3:int,n4:int,n5:int) -> Harmonic:
     """
     Creates an Harmonic object from 6 Doodson digits from 0 to 9.
+
+    :param n0: First Doodson number (0 to 9) 
+    :type n0: int
+    :param n1: Second Doodson number (0 to 9) 
+    :type n1: int
+    :param n2: Third Doodson number (0 to 9) 
+    :type n2: int
+    :param n3: Fifth Doodson number (0 to 9) 
+    :type n3: int
+    :param n4: Sixth Doodson number (0 to 9) 
+    :type n4: int
+    :param n5: Seventh Doodson number (0 to 9) 
+    :type n5: int
+    :return: The harmonic that matches Doodson's number.
+    :rtype: Harmonic.
     """
     return Harmonic([n0,n1-5,n2-5,n3-5,n4-5,n5-5])
 
 def get_by_number(number:int) -> Harmonic:
     """
     Creates a Harmonic object from a Doodson number made of 6 digits. Thus 000000 ≤ number ≤ 999999. 
+
+    :param number: A 1 to 6 digits number, that is used as Doodson number to create an Harmonic instance.
+    :type number: int, 0 to 999999.
+    :return: Harmonic.
+    :rtype: Harmonic.
     """
     n=[None]*6
     n[0]=number//100000
@@ -149,7 +172,7 @@ def get_by_number(number:int) -> Harmonic:
     n[3]=((number%1000)//100)-5
     n[4]=((number%100)//10)-5
     n[5]=(number%10)-5
-    logging.debug(n)
+    logger.debug(n)
     return Harmonic(n)
     
 # Harmonics constants

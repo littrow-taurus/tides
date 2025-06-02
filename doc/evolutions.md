@@ -1,5 +1,10 @@
 # Evolutions
 
+- 2025-06-02 0.0.4  
+  Module datas.  
+  Module logging.  
+  Prevent close frequencies in models.  
+
 - 2025-05-21 0.0.3  
   Implementation of height computing using cosinus and sinus amplitudes.  
 

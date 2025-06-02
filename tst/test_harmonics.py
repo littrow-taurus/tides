@@ -1,5 +1,5 @@
+import conf_logging
 import logging
-logging.basicConfig(encoding='utf-8',level=logging.DEBUG)
 import unittest
 import random
 import harmonics
@@ -9,6 +9,10 @@ from harmonics import HarmonicException
 logger=logging.getLogger(__name__)
 
 class TestHarmonics(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        logging.basicConfig(encoding='utf-8',level=logging.DEBUG)
+
     def test_create_Harmonic(self):
         """
         Test nominal creation of Harmonic.
