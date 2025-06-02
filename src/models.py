@@ -10,7 +10,7 @@ import math
 
 class Model:
     """
-    This class holds a fixed list of harmonics, and computerized list of amplitudes and phases.
+    This class holds a fixed list of harmonics, and computerized list of amplitudes (cosinus ans sinus).
     """
 
     def __init__(self,harmonics:list[Harmonic]):
@@ -18,36 +18,33 @@ class Model:
         Constructor of Model given its harmonics.
         """
         self.harmonics=harmonics
-        self.amplitudes=[float]*len(harmonics)
-        self.phases=[float]*len(harmonics)
+        self.amplitudes_cos=[float]*len(harmonics)
+        self.amplitudes_sin=[float]*len(harmonics)
 
     def get_harmonics(self):
         return self.harmonics
     
-    def get_amplitudes(self):
+    def get_amplitudes_cos(self):
         """
-        Amplitudes in m matching order with harmonics.
+        Amplitudes of cosinus in m matching order with harmonics.
         """
-        return self.amplitudes
+        return self.amplitudes_cos
     
-    def get_phases(self):
+    def get_amplitudes_sin(self):
         """
-        Phases in ° matching order with harmonics.
+        Amplitudes of sinus in m matching order with harmonics.
         """
-        return self.phases
+        return self.amplitudes_sin
     
     def get_height(self,t:datetime):
         height=0.0
         for n in range(len(self.harmonics)):
             # speed is °/h
-            # dt=(t-H.T0) is timedelta
-            # dh=dt.days*24+dt.seconds/3600 is hours (float) from H.T0.
+            # dh is h
             # speed*dh is °
-            # phase is °
-            dt=t-H.T0
-            dh=dt.days*24+dt.seconds/3600
-            x=self.harmonics[n].get_speed()*dh + self.phases[n]
-            height+=self.amplitudes[n] * math.cos(math.radians(x))
+            dh=get_hour(t) # time from T0 in hours 
+            angle=math.radians(self.harmonics[n].get_speed()*dh)
+            height+=self.amplitudes_cos[n] * math.cos(angle) + self.amplitudes_sin[n] * math.cos(angle)
         return height
     
 class Model_N3(Model):
@@ -89,3 +86,12 @@ class Model_N32(Model):
                           H.S1,H.M1,H.J1,H.Mm,H.Ssa,H.Sa,H.Msf,H.Mf,
                           H.rau1,H.Q1,H.T2,H.R2,H._2Q1,H.P1,H._2SM2,H.M3])
 
+def get_hour(t:datetime)->float:
+    """
+    Computes the number of hours (float) elapsed from H.T0.
+    """
+    # dt=(t-H.T0) is timedelta
+    # dh=dt.days*24+dt.seconds/3600 is hours (float) from H.T0.
+    dt=t-H.T0
+    dh=dt.days*24+dt.seconds/3600
+    return dh

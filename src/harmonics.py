@@ -24,17 +24,21 @@ In the program variables such as ds/dt are called ds.
 
 import logging
 import datetime
+from datetime import datetime
+from datetime import timezone
 
 logger=logging.getLogger(__name__)
 
 APPLY_TIME_CORRECTION=True
 "Boolean that apply time correction in T^2 or not."
-T0=datetime.datetime(1900,1,1,hour=0,minute=0,second=0)
+
+T0=datetime(1900,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
 "All times origin for whole program."
+
 _t=0
 if APPLY_TIME_CORRECTION:
     # As we compute number of ceturies, we don't care about seconds which materilizes a fraction of day
-    _t=(datetime.datetime.now()-T0).days/36525
+    _t=(datetime.now(timezone.utc)-T0).days/36525
 
 ds=(481267.8906+2*0.0020*_t)/36525/24
 "Speed of longitude of the Moon (°/h)."
