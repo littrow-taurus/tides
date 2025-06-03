@@ -13,7 +13,7 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(version.MINOR,0)
 
     def test_version_build(self):
-        self.assertEqual(version.BUILD,4)
+        self.assertEqual(version.BUILD,5)
 
     def test_print_version(self):
         print(version.get_version())

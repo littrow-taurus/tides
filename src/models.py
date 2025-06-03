@@ -11,6 +11,8 @@ from datetime import datetime
 import math
 from deprecated import deprecated
 from harmonics import HarmonicException
+from datas import Data
+import numpy
 
 logger=logging.getLogger(__name__)
 
@@ -108,8 +110,6 @@ class Model_N16(Model):
     Model N16 (16 harmonics with a non nul frequency): (M0), M2, S2, N2, K1, M4, O1, M6, MK3, S4, MN4, mu2, _2N2, OO1, lambda2.
     """
     def __init__(self):
-        print(H.M2.get_speed())
-        print(H.nu2.get_speed())
         super().__init__([H.M0,H.M2,H.S2,H.N2,
                           H.K1,H.M4,H.O1,
                           H.M6,H.MK3,H.S4,H.MN4,
@@ -137,6 +137,56 @@ class Model_N32(Model):
                           H.nu2,H.mu2,H._2N2,H.OO1,H.lambda2,
                           H.S1,H.M1,H.J1,H.Mm,H.Ssa,H.Sa,H.Msf,H.Mf,
                           H.rau1,H.Q1,H.T2,H.R2,H._2Q1,H.P1,H._2SM2,H.M3],min_delta=0.03)
+        
+class ModelError():
+    """
+    This class holds datas resulting in measurement comparing a model and a set of datas.
+
+    :param p: List of percentiles of absolutes error. Each element of the list is a tuple. This tuple contains the percentile, and the value (ex: p30=0.25 -> (30,0.25)) 
+    :type p: list[tuple(int,float)]
+
+    :param mean: Mean error
+    :type mean: float
+    :param min: Minimal derivation model error (negative value)
+    :type min: float
+    :param max: Maximal derivation model error (positive value)
+    :type max: float
+    :param var: Variance of errors.
+    :type var: float
+    :param abs: Absolute error
+    :type abs: float
+    """
+    def __init__(self,model:Model,data_list:list[Data]):
+        """
+        Constructor of the model's error measurment. It computes all errors (measures) data.
+
+        :param model: Model to measure
+        :type model: Model
+        :param data_list: Reference datas the model is tested against
+        :type data_list: list[Data]
+        """
+        delta_list=[]
+        for data in data_list:
+            height_ref=data.height
+            height_mod=model.get_height(data.t)
+            delta=height_mod-height_ref
+            delta_list.append(delta)
+
+        abs_delta_list=numpy.absolute(delta_list)
+        self.p=[]
+        for perc in range(10,100,10):
+            self.p.append((perc,numpy.percentile(abs_delta_list,perc))) # tuple
+        self.mean=numpy.mean(delta_list)
+        self.min=numpy.min(delta_list)
+        self.max=numpy.max(delta_list)
+        self.var=numpy.var(delta_list)
+        self.abs=numpy.mean(abs_delta_list)
+
+    def __str__(self):
+        p_str=""
+        for p in self.p:
+            p_str+=f"\np{p[0]}: {p[1]:0.4f}"
+        return f"mean: {self.mean:0.4f}, min: {self.min:0.4f}, max: {self.max:0.4f}, var: {self.var:0.4f}, abs: {self.abs:0.4f}{p_str}"
 
 def get_hour(t:datetime)->float:
     """

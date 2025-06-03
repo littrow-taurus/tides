@@ -1,5 +1,10 @@
 # Evolutions
 
+- 2025-06-03 0.0.5  
+  Bugfix in Model's height computing.
+  Error measurement.
+  Data reader.
+
 - 2025-06-02 0.0.4  
   Module datas.  
   Module logging.  

@@ -62,3 +62,5 @@ Source: [Theory of tides - Wikipedia](https://en.wikipedia.org/wiki/Theory_of_ti
 - [Chapitre 4 Le potentiel générateur des marées](http://fabien.lefevre.free.fr/These_HTML/doc0004.htm)
 - [Lecture 1: Introduction to ocean tides, Myrl Hendershott](https://www.whoi.edu/cms/files/lecture01_21351.pdf)
 - [Transformation between the International Terrestrial Reference System and the Geocentric Celestial Reference System](https://iers-conventions.obspm.fr/content/chapter5/icc5.pdf)
+- [Download tide gauge data - data.shom.fr](https://data.shom.fr/donnees/refmar/111/download)
+  We use *Validated (delayed mode)*
