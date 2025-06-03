@@ -76,7 +76,7 @@ class Model:
             # speed*dh is °
             dh=get_hour(t) # time from T0 in hours 
             angle=math.radians(self.harmonics[n].get_speed()*dh)
-            height+=self.amplitudes_cos[n] * math.cos(angle) + self.amplitudes_sin[n] * math.cos(angle)
+            height+=self.amplitudes_cos[n] * math.cos(angle) + self.amplitudes_sin[n] * math.sin(angle)
         return height
     
 class Model_N3(Model):
