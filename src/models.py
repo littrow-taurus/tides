@@ -13,6 +13,8 @@ from deprecated import deprecated
 from harmonics import HarmonicException
 from datas import Data
 import numpy
+from pathlib import Path
+import pickle
 
 logger=logging.getLogger(__name__)
 
@@ -232,3 +234,30 @@ def check_harmonics(harmonics:list[Harmonic],min_delta=0.5):
                 delta=math.fabs(harmonics[i].get_speed()-harmonics[j].get_speed())
                 if delta < min_delta:
                     raise HarmonicException(f"Harmonics are too close to each other: {i}:{harmonics[i].get_speed()}, {j}:{harmonics[j].get_speed()} (delta={delta})")
+                
+def save(model:Model,file:Path):
+    """
+    Saves (serialize) the model in a file.
+
+    :param model: The model to save. 
+    :type model: Model
+    :param file: The destination file where model is serialized.
+    :type file: Path
+    """
+    f=open(file,"wb")
+    pickle.dump(model,f,protocol=pickle.DEFAULT_PROTOCOL)
+    f.close()
+
+def read(file:Path) -> Model:
+    """
+    Loads (deserialize) the model from a file.
+
+    :param file: The serialization file from where model is read.
+    :type file: Path
+    :return model: The model to restore. 
+    :rtype: Model
+    """
+    f=open(file,"rb")
+    model=pickle.load(f)
+    f.close()
+    return model

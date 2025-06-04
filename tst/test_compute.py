@@ -327,3 +327,16 @@ class TestCompute(unittest.TestCase):
         err=compute.fourier_transform(model,data_list)
         logger.info(f"Model_N32:\n{err}")
     
+    def test_now_spot111(self):
+        files=[f for f in REFMAR_DIR.glob("111_*.txt")]
+        data_list=datas.reader(files)
+        model=Model_N16()
+        err=compute.fourier_transform(model,data_list)
+        logger.info(f"Model_N16:\n{err}")
+        now=datetime.now(timezone.utc)
+        t=now.replace(hour=0,minute=0,second=0,microsecond=0)
+        t_end=now.replace(hour=23,minute=59,second=59,microsecond=0)
+        while t<=t_end:
+            logger.info(f"{t}: {model.get_height(t)}")
+            t+=timedelta(minutes=10)
+        logger.info(f"Now: {model.get_height(now):0.3f}")

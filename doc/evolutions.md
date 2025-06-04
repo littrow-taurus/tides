@@ -1,5 +1,8 @@
 # Evolutions
 
+- 2025-06-03 0.0.6  
+  Save model.
+  
 - 2025-06-03 0.0.5  
   Bugfix in Model's height computing.
   Error measurement.

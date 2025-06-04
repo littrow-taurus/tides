@@ -13,8 +13,13 @@ import harmonics as H
 from datetime import datetime
 from datetime import timezone
 from datetime import timedelta
+import random
+from pathlib import Path
 
 logger=logging.getLogger(__name__)
+
+ROOT_DIR=Path(__file__).parents[1]
+SER_DIR=ROOT_DIR / "data" / "ser"
 
 class TestModels(unittest.TestCase):
     def test_create_Model(self):
@@ -204,3 +209,24 @@ class TestModels(unittest.TestCase):
             models.get_hour(t)
         e=cm.exception
         print(e)
+
+    def test_save(self):
+        model_ref=Model_N3()
+        for i in range(0,4):
+            model_ref.amplitudes_cos[i]=random.uniform(-2.0,2.0)
+            model_ref.amplitudes_sin[i]=random.uniform(-2.0,2.0)
+        file=SER_DIR / "test_save.ser"
+        models.save(model_ref,file)
+        self.assertTrue(file.is_file())
+
+    def test_load(self):
+        model_ref=Model_N3()
+        for i in range(0,4):
+            model_ref.amplitudes_cos[i]=random.uniform(-2.0,2.0)
+            model_ref.amplitudes_sin[i]=random.uniform(-2.0,2.0)
+        file=SER_DIR / "test_load.ser"
+        models.save(model_ref,file)
+        model=models.read(file)
+        for i in range(0,4):
+            self.assertEqual(model.amplitudes_cos[i],model_ref.amplitudes_cos[i])
+            self.assertEqual(model.amplitudes_sin[i],model_ref.amplitudes_sin[i])
