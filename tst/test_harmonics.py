@@ -28,12 +28,12 @@ class TestHarmonics(unittest.TestCase):
         with self.assertRaises(HarmonicException) as cm:
             Harmonic([0,0,0,0,0])
         e=cm.exception
-        print(e)
+        logger.debug(e)
         # len=7
         with self.assertRaises(HarmonicException) as cm:
             Harmonic([0,0,0,0,0,0,0])
         e=cm.exception
-        print(e)
+        logger.debug(e)
 
     def test_Harmonic_values_limits(self):
         """
@@ -44,7 +44,7 @@ class TestHarmonics(unittest.TestCase):
         with self.assertRaises(HarmonicException) as cm:
             Harmonic([-1,0,0, 0,0,0])
         e=cm.exception
-        print(e)
+        logger.debug(e)
 
         # −5 ≤ mi < 5
         with self.assertRaises(HarmonicException):
@@ -117,7 +117,7 @@ class TestHarmonics(unittest.TestCase):
         with self.assertRaises(HarmonicException) as cm:
             harmonics.get_by_number(-1)
         e=cm.exception
-        print(e)
+        logger.debug(e)
 
     def test_dtau(self):
         logger.debug(harmonics.dtau)
