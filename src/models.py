@@ -168,16 +168,20 @@ class ModelError():
         :type data_list: list[Data]
         """
         delta_list=[]
+#        self.wrong=[]
         for data in data_list:
             height_ref=data.height
             height_mod=model.get_height(data.t)
             delta=height_mod-height_ref
             delta_list.append(delta)
+#            if math.fabs(delta) > 1.0:
+#                self.wrong.append((data,delta))
 
         abs_delta_list=numpy.absolute(delta_list)
         self.p=[]
         for perc in range(10,100,10):
             self.p.append((perc,numpy.percentile(abs_delta_list,perc))) # tuple
+        self.p.append((99,numpy.percentile(abs_delta_list,99)))
         self.mean=numpy.mean(delta_list)
         self.min=numpy.min(delta_list)
         self.max=numpy.max(delta_list)
@@ -188,7 +192,11 @@ class ModelError():
         p_str=""
         for p in self.p:
             p_str+=f"\np{p[0]}: {p[1]:0.4f}"
-        return f"mean: {self.mean:0.4f}, min: {self.min:0.4f}, max: {self.max:0.4f}, var: {self.var:0.4f}, abs: {self.abs:0.4f}{p_str}"
+#        w_str=""
+#        for w in self.wrong:
+#            w_str+=f"\n{w[0].t} {w[1]:0.4f})"
+        return f"mean: {self.mean:0.4f}, min: {self.min:0.4f}, max: {self.max:0.4f}, var: {self.var:0.4f}, abs: {self.abs:0.4f}\npercentiles:{p_str}"
+#        return f"mean: {self.mean:0.4f}, min: {self.min:0.4f}, max: {self.max:0.4f}, var: {self.var:0.4f}, abs: {self.abs:0.4f}\npercentiles:{p_str}\nwrongs:{w_str}"
 
 def get_hour(t:datetime)->float:
     """
