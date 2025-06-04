@@ -201,14 +201,14 @@ class TestModels(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             m.get_height(t)
         e=cm.exception
-        print(e)
+        logger.debug(e)
 
     def test_get_hour_naive(self):
         t=datetime.now()
         with self.assertRaises(ValueError) as cm:
             models.get_hour(t)
         e=cm.exception
-        print(e)
+        logger.debug(e)
 
     def test_save(self):
         model_ref=Model_N3()

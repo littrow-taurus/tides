@@ -22,6 +22,12 @@ ROOT_DIR=Path(__file__).parents[1]
 REFMAR_DIR=ROOT_DIR / "data" / "REFMAR"
 
 class TestCompute(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        files=[f for f in REFMAR_DIR.glob("111_*.txt")]
+        self.data_list=datas.reader(files)
+
+
     def test_fourier_transform_N3_c100(self):
         model=Model_N3()
         model.amplitudes_cos[0]=0.0 # M0
@@ -260,10 +266,8 @@ class TestCompute(unittest.TestCase):
             self.assertAlmostEqual(model_test.amplitudes_sin[i],model.amplitudes_sin[i],delta=0.01)
 
     def test_fourier_transform_N3_spot111(self):
-        files=[f for f in REFMAR_DIR.glob("111_*.txt")]
-        data_list=datas.reader(files)
         model=Model_N3()
-        err=compute.fourier_transform(model,data_list)
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(err)
         self.assertLess(err.abs,1.0)
         t0=datetime(2000,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
@@ -273,17 +277,15 @@ class TestCompute(unittest.TestCase):
             r_m=random.randrange(0,60,10)
             t=t0+timedelta(days=r_d,hours=r_h,minutes=r_m)
             height_est=model.get_height(t)
-            for d in data_list:
+            for d in self.data_list:
                 if d.t==t:                    
                     height_ref=d.height
                     logger.info(f"{t}: {height_est:0.3f} / {height_ref:0.3f} (delta={height_est-height_ref:0.3f})")
                     self.assertLess(height_est-height_ref,1.0)
 
     def test_fourier_transform_N10_spot111(self):
-        files=[f for f in REFMAR_DIR.glob("111_*.txt")]
-        data_list=datas.reader(files)
         model=Model_N10()
-        err=compute.fourier_transform(model,data_list)
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(err)
         self.assertLess(err.abs,1.0)
         t0=datetime(2000,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
@@ -293,49 +295,44 @@ class TestCompute(unittest.TestCase):
             r_m=random.randrange(0,60,10)
             t=t0+timedelta(days=r_d,hours=r_h,minutes=r_m)
             height_est=model.get_height(t)
-            for d in data_list:
+            for d in self.data_list:
                 if d.t==t:                    
                     height_ref=d.height
                     logger.info(f"{t}: {height_est:0.3f} / {height_ref:0.3f} (delta={height_est-height_ref:0.3f})")
                     self.assertLess(height_est-height_ref,1.0)
 
     def test_fourier_transform_all_models_perfs_spot111(self):
-        files=[f for f in REFMAR_DIR.glob("111_*.txt")]
-        data_list=datas.reader(files)
-
         model=Model_N3()
-        err=compute.fourier_transform(model,data_list)
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(f"Model_N3:\n{err}")
     
 
         model=Model_N6()
-        err=compute.fourier_transform(model,data_list)
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(f"Model_N6:\n{err}")
     
 
         model=Model_N10()
-        err=compute.fourier_transform(model,data_list)
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(f"Model_N10:\n{err}")
         
         model=Model_N16()
-        err=compute.fourier_transform(model,data_list)
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(f"Model_N16:\n{err}")
     
 
         model=Model_N24()
-        err=compute.fourier_transform(model,data_list)
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(f"Model_N24:\n{err}")
     
 
         model=Model_N32()
-        err=compute.fourier_transform(model,data_list)
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(f"Model_N32:\n{err}")
     
     def test_now_spot111(self):
-        files=[f for f in REFMAR_DIR.glob("111_*.txt")]
-        data_list=datas.reader(files)
         model=Model_N16()
-        err=compute.fourier_transform(model,data_list)
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(f"Model_N16:\n{err}")
         now=datetime.now(timezone.utc)
         t=now.replace(hour=0,minute=0,second=0,microsecond=0)
