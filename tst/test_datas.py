@@ -24,7 +24,7 @@ class TestDatas(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             Data(t,0.0)
         e=cm.exception
-        print(e)
+        logger.debug(e)
 
     def test_reader(self):
         files=[f for f in REFMAR_DIR.glob("111_*.txt")]

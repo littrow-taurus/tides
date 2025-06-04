@@ -265,6 +265,7 @@ class TestCompute(unittest.TestCase):
         model=Model_N3()
         err=compute.fourier_transform(model,data_list)
         logger.info(err)
+        self.assertLess(err.abs,1.0)
         t0=datetime(2000,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         for i in range(10):
             r_d=random.randrange(0,365*20)
@@ -275,7 +276,8 @@ class TestCompute(unittest.TestCase):
             for d in data_list:
                 if d.t==t:                    
                     height_ref=d.height
-                    print(f"{t}: {height_est:0.3f} / {height_ref:0.3f} (delta={height_est-height_ref:0.3f})")
+                    logger.info(f"{t}: {height_est:0.3f} / {height_ref:0.3f} (delta={height_est-height_ref:0.3f})")
+                    self.assertLess(height_est-height_ref,1.0)
 
     def test_fourier_transform_N10_spot111(self):
         files=[f for f in REFMAR_DIR.glob("111_*.txt")]
@@ -283,6 +285,7 @@ class TestCompute(unittest.TestCase):
         model=Model_N10()
         err=compute.fourier_transform(model,data_list)
         logger.info(err)
+        self.assertLess(err.abs,1.0)
         t0=datetime(2000,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         for i in range(10):
             r_d=random.randrange(0,365*20)
@@ -293,7 +296,8 @@ class TestCompute(unittest.TestCase):
             for d in data_list:
                 if d.t==t:                    
                     height_ref=d.height
-                    print(f"{t}: {height_est:0.3f} / {height_ref:0.3f} (delta={height_est-height_ref:0.3f})")
+                    logger.info(f"{t}: {height_est:0.3f} / {height_ref:0.3f} (delta={height_est-height_ref:0.3f})")
+                    self.assertLess(height_est-height_ref,1.0)
 
     def test_fourier_transform_all_models_perfs_spot111(self):
         files=[f for f in REFMAR_DIR.glob("111_*.txt")]

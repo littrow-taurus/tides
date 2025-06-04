@@ -16,5 +16,5 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(version.BUILD,6)
 
     def test_print_version(self):
-        print(version.get_version())
+        logger.info(f"version: {version.get_version()}")
         self.assertEqual(version.get_version(),f"{version.MAJOR}.{version.MINOR}.{version.BUILD}")
