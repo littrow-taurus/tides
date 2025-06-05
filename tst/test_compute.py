@@ -398,7 +398,67 @@ class TestCompute(unittest.TestCase):
             t+=timedelta(minutes=10)
         logger.info(f"Now: {model.get_height(now):0.3f}")
 
-    def test_tune_harmonic(self):
+    def test_tune_harmonic_grid(self):
+        t_start=datetime(2024,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        t_end=datetime(2025,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+
+        model=Model_N3()
+        err=compute.fourier_transform(model,data_ref)
+        logger.info(f"Before tuning:\n{err}")
+        print(model)
+
+        t_start=datetime(2025,3,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        t_end=datetime(2025,3,5,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+#        model_tuned=compute.tune_harmonic(model,0,0.2,4,data_ref)
+#        model_tuned=compute.tune_harmonic(model_tuned,1,0.2,4,data_ref)
+#        model_tuned=compute.tune_harmonic(model_tuned,2,0.2,4,data_ref)
+#        model_tuned=compute.tune_harmonic(model_tuned,3,0.2,4,data_ref)
+        model_tuned=compute.tune_harmonic_grid(model,0,0.2,10,data_ref)
+        print(model_tuned)
+        for i in range(2):
+            model_tuned=compute.tune_harmonic_grid(model_tuned,1,0.1,10,data_ref)
+            print(model_tuned)
+            model_tuned=compute.tune_harmonic_grid(model_tuned,2,0.1,10,data_ref)
+            print(model_tuned)
+            model_tuned=compute.tune_harmonic_grid(model_tuned,3,0.1,10,data_ref)
+            print(model_tuned)
+        for i in range(20):
+            model_tuned=compute.tune_harmonic_grid(model,0,0.2,10,data_ref)
+            print(model_tuned)
+            model_tuned=compute.tune_harmonic_grid(model_tuned,1,0.05,10,data_ref)
+            print(model_tuned)
+            model_tuned=compute.tune_harmonic_grid(model_tuned,2,0.05,10,data_ref)
+            print(model_tuned)
+            model_tuned=compute.tune_harmonic_grid(model_tuned,3,0.05,10,data_ref)
+            print(model_tuned)
+        """
+        """
+        err_tuned=ModelError(model_tuned,data_ref)
+        logger.info(f"After tuning:\n{err_tuned}")
+
+        t_start=datetime(2025,3,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        t_end=datetime(2025,3,5,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+        data_mod=[]
+        data_mod_tuned=[]
+        for d in data_ref:
+            d_mod=Data(d.t,model.get_height(d.t))
+            data_mod.append(d_mod)
+            d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
+            data_mod_tuned.append(d_mod_tuned)
+        height_ref=[d.height for d in data_ref]
+        height_mod=[d.height for d in data_mod]
+        height_mod_tuned=[d.height for d in data_mod_tuned]
+        t_ref=[d.t for d in data_ref]
+        plt.plot(t_ref,height_ref,label='ref')
+        plt.plot(t_ref,height_mod,label='mod')
+        plt.plot(t_ref,height_mod_tuned,label='tuned')
+        plt.legend()
+        plt.show()
+
+    def test_tune_harmonic_amp(self):
         t_start=datetime(2024,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         t_end=datetime(2025,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
@@ -407,10 +467,44 @@ class TestCompute(unittest.TestCase):
         err=compute.fourier_transform(model,data_ref)
         logger.info(f"Before tuning:\n{err}")
 
-        model_tuned=compute.tune_harmonic(model,0,0.1,4,data_ref)
-        model_tuned=compute.tune_harmonic(model,1,0.1,4,data_ref)
-        model_tuned=compute.tune_harmonic(model,2,0.1,4,data_ref)
-        model_tuned=compute.tune_harmonic(model,3,0.1,4,data_ref)
+        model_tuned=compute.tune_harmonic_amp(model,0,0.2,10,data_ref)
+        err_tuned=ModelError(model_tuned,data_ref)
+        logger.info(f"After tuning:\n{err_tuned}")
+
+        t_start=datetime(2025,3,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        t_end=datetime(2025,3,5,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+        data_mod=[]
+        data_mod_tuned=[]
+        for d in data_ref:
+            d_mod=Data(d.t,model.get_height(d.t))
+            data_mod.append(d_mod)
+            d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
+            data_mod_tuned.append(d_mod_tuned)
+        height_ref=[d.height for d in data_ref]
+        height_mod=[d.height for d in data_mod]
+        height_mod_tuned=[d.height for d in data_mod_tuned]
+        t_ref=[d.t for d in data_ref]
+        plt.plot(t_ref,height_ref)
+        plt.plot(t_ref,height_mod)
+        plt.plot(t_ref,height_mod_tuned)
+        plt.show()
+
+    def test_tune_harmonic_ang(self):
+        t_start=datetime(2024,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        t_end=datetime(2025,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+
+        model=Model_N3()
+        err=compute.fourier_transform(model,data_ref)
+        err=ModelError(model,data_ref)
+        logger.info(f"Before tuning:\n{err}")
+
+        model_tuned=compute.tune_harmonic_ang(model,0,0.2,10,data_ref)
+
+        t_start=datetime(2025,3,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        t_end=datetime(2025,3,5,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
         err_tuned=ModelError(model_tuned,data_ref)
         logger.info(f"After tuning:\n{err_tuned}")
 

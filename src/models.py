@@ -15,6 +15,7 @@ from datas import Data
 import numpy
 from pathlib import Path
 import pickle
+import copy
 
 logger=logging.getLogger(__name__)
 
@@ -36,15 +37,13 @@ class Model:
 
         :param harmonics: List of Harmonic that makes the model.
         :type harmonics: list[Harmonic]
-        :param harmonics: The list of harmonics to check if they are separated enough.
-        :type harmonics: list[Harmonic]
         :param min_delta: Minimum space between two harmonics (°/h)
         :type min_delta: float
         """
         self.harmonics=harmonics
         check_harmonics(harmonics,min_delta)
-        self.amplitudes_cos=[float]*len(harmonics)
-        self.amplitudes_sin=[float]*len(harmonics)
+        self.amplitudes_cos=[0.0]*len(harmonics)
+        self.amplitudes_sin=[0.0]*len(harmonics)
 
     @deprecated(version='0.0.4', reason="Use direct access to attribute.")
     def get_harmonics(self):
@@ -82,6 +81,28 @@ class Model:
             angle=math.radians(self.harmonics[n].get_speed()*dh)
             height+=self.amplitudes_cos[n] * math.cos(angle) + self.amplitudes_sin[n] * math.sin(angle)
         return height
+    
+    def __str__(self):
+        str=""
+        for i in range(len(self.harmonics)):
+            str+=f"{self.harmonics[i]}:[{self.amplitudes_cos[i]:0.4f},{self.amplitudes_sin[i]:0.4f}], "
+        return str       
+
+    def __copy__(self):
+        N=len(self.harmonics)
+        logger.debug(f"self.harmonics={self.harmonics}")
+        logger.debug(f"N={N}")
+        _harmonics=[None]*N
+        for i in range(N):
+            logger.debug(f"i={i}")
+            _harmonics[i]=copy.copy(self.harmonics[i])
+        _model=Model(_harmonics,min_delta=0.0)
+        _model.amplitudes_cos=copy.copy(self.amplitudes_cos)
+        _model.amplitudes_sin=copy.copy(self.amplitudes_sin)
+        return _model
+    
+    def __eq__(self,other):
+        return self.harmonics==other.harmonics and self.amplitudes_cos==other.amplitudes_cos and self.amplitudes_sin==other.amplitudes_sin 
     
 class Model_N3(Model):
     """
@@ -191,11 +212,11 @@ class ModelError():
     def __str__(self):
         p_str=""
         for p in self.p:
-            p_str+=f"\np{p[0]}: {p[1]:0.4f}"
+            p_str+=f"\n\tp{p[0]}:{p[1]:0.4f}"
 #        w_str=""
 #        for w in self.wrong:
 #            w_str+=f"\n{w[0].t} {w[1]:0.4f})"
-        return f"mean: {self.mean:0.4f}, min: {self.min:0.4f}, max: {self.max:0.4f}, var: {self.var:0.4f}, abs: {self.abs:0.4f}\npercentiles:{p_str}"
+        return f"mean:{self.mean:0.4f}, min:{self.min:0.4f}, max:{self.max:0.4f}, var:{self.var:0.4f}, abs:{self.abs:0.4f}\npercentiles:{p_str}"
 #        return f"mean: {self.mean:0.4f}, min: {self.min:0.4f}, max: {self.max:0.4f}, var: {self.var:0.4f}, abs: {self.abs:0.4f}\npercentiles:{p_str}\nwrongs:{w_str}"
 
 def get_hour(t:datetime)->float:

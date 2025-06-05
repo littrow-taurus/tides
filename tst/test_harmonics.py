@@ -264,3 +264,6 @@ class TestHarmonics(unittest.TestCase):
         # (1): Source [Chapitre 4 Le potentiel générateur des marées](http://fabien.lefevre.free.fr/These_HTML/doc0004.htm)
         # (2): Source [Theory of tides - Wikipedia](https://en.wikipedia.org/wiki/Theory_of_tides)
         # (3): Source [Lecture 1: Introduction to ocean tides, Myrl Hendershott](https://www.whoi.edu/cms/files/lecture01_21351.pdf)
+
+    def test_str(self):
+        logger.info(harmonics.M3)

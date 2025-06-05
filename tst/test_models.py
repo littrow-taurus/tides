@@ -15,6 +15,9 @@ from datetime import timezone
 from datetime import timedelta
 import random
 from pathlib import Path
+import copy
+import datas
+import harmonics
 
 logger=logging.getLogger(__name__)
 
@@ -230,3 +233,35 @@ class TestModels(unittest.TestCase):
         for i in range(0,4):
             self.assertEqual(model.amplitudes_cos[i],model_ref.amplitudes_cos[i])
             self.assertEqual(model.amplitudes_sin[i],model_ref.amplitudes_sin[i])
+
+    def test_copy_model(self):
+        model_1=Model_N3()
+        model_2=copy.copy(model_1)
+
+        N=len(model_1.harmonics)
+        # Objects must be different references.
+        self.assertIsNot(model_2,model_1)
+        # Idem for harmonics, amplitudes_cos, amplitudes_sin that are objects.
+        self.assertIsNot(model_2.harmonics,model_1.harmonics)
+        for i in range(N):
+            # Each harmonic is an object, we check it has been cloned.
+            self.assertIsNot(model_2.harmonics[i],model_1.harmonics[i])
+            # Each list of numbers (attribute n) in harmonic is an object, we check it has been cloned.
+            self.assertIsNot(model_2.harmonics[i].n,model_1.harmonics[i].n)
+        # We check lists of amplitudes had been cloned
+        self.assertIsNot(model_2.amplitudes_cos,model_1.amplitudes_cos)
+        self.assertIsNot(model_2.amplitudes_sin,model_1.amplitudes_sin)
+        # Now we know they do not contain common references, we check both models are identical.
+        self.assertEqual(model_2,model_1)
+#        self.assertEqual(model_2,model_1)
+#        self.assertEqual(model_2,model_1)
+#        self.assertEqual(model_2,model_1)
+#        self.assertEqual(model_2,model_1)
+
+    def test_model_str(self):
+        model=Model_N32()
+        logger.info(model)
+
+    def test_modelError_str(self):
+        err=models.ModelError(Model_N3(),[datas.Data(harmonics.T0,0.0)])
+        logger.info(err)
