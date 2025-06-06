@@ -10,6 +10,7 @@ from models import Model
 from datas import Data
 import math
 from models import ModelError
+import copy 
 
 logger=logging.getLogger(__name__)
 
@@ -72,30 +73,30 @@ def tune_harmonic_grid(model:Model,harmonic_index:int,R:float,N:int,data_list:li
     :type data_list: list[Data]
     :return: The best model obtained according to above exploration 
     :rtype: Model
+    :return: Error of tuned model
+    :rtype: ModelError
     """
     c0=model.amplitudes_cos[harmonic_index]
     s0=model.amplitudes_sin[harmonic_index]
     d=R/N*math.sqrt(c0**2+s0**2)
-    model_best=Model(model.harmonics.copy())
-    model_best.amplitudes_cos=model.amplitudes_cos.copy()
-    model_best.amplitudes_sin=model.amplitudes_sin.copy()
+    model_best=copy.copy(model)
     err_best=ModelError(model_best,data_list)
 
     for c_step in range(-N,N+1):
         c=c0+c_step*d
         for s_step in range(-N,N+1):
             s=s0+s_step*d
-            model_tune=Model(model.harmonics.copy())
-            model_tune.amplitudes_cos=model.amplitudes_cos.copy()
-            model_tune.amplitudes_sin=model.amplitudes_sin.copy()
+            model_tune=copy.copy(model)
             model_tune.amplitudes_cos[harmonic_index]=c
             model_tune.amplitudes_sin[harmonic_index]=s
             err_tune=ModelError(model_tune,data_list)
-            if err_tune.abs<err_best.abs:
+            if max(err_tune.max,math.fabs(err_tune.min))<max(err_best.max,math.fabs(err_best.min)):
+#            if err_tune.max<=err_best.max and err_tune.min>=err_best.min:
+#            if err_tune.var<err_best.var:
+#            if err_tune.abs<err_best.abs:
                 model_best=model_tune
-                err_best=err_tune
-    
-    return model_best 
+                err_best=err_tune    
+    return model_best,err_best
 
 def tune_harmonic_amp(model:Model,harmonic_index:int,R:float,N:int,data_list:list[Data]) -> Model:
     """
@@ -119,6 +120,8 @@ def tune_harmonic_amp(model:Model,harmonic_index:int,R:float,N:int,data_list:lis
     :type data_list: list[Data]
     :return: The best model obtained according to above exploration 
     :rtype: Model
+    :return: Error of tuned model
+    :rtype: ModelError
     """
     c0=model.amplitudes_cos[harmonic_index]
     s0=model.amplitudes_sin[harmonic_index]
@@ -140,11 +143,14 @@ def tune_harmonic_amp(model:Model,harmonic_index:int,R:float,N:int,data_list:lis
         model_tune.amplitudes_cos[harmonic_index]=c
         model_tune.amplitudes_sin[harmonic_index]=s
         err_tune=ModelError(model_tune,data_list)
-        if err_tune.abs<err_best.abs:
+        if max(err_tune.max,math.fabs(err_tune.min))<max(err_best.max,math.fabs(err_best.min)):
+#        if err_tune.max<=err_best.max and err_tune.min>=err_best.min:
+#        if err_tune.var<err_best.var:
+#        if err_tune.abs<err_best.abs:
             model_best=model_tune
             err_best=err_tune
     
-    return model_best 
+    return model_best,err_best
 
 def tune_harmonic_ang(model:Model,harmonic_index:int,R:float,N:int,data_list:list[Data]) -> Model:
     """
@@ -171,6 +177,8 @@ def tune_harmonic_ang(model:Model,harmonic_index:int,R:float,N:int,data_list:lis
     :type data_list: list[Data]
     :return: The best model obtained according to above exploration 
     :rtype: Model
+    :return: Error of tuned model
+    :rtype: ModelError
     """
     c0=model.amplitudes_cos[harmonic_index]
     s0=model.amplitudes_sin[harmonic_index]
@@ -195,8 +203,11 @@ def tune_harmonic_ang(model:Model,harmonic_index:int,R:float,N:int,data_list:lis
         model_tune.amplitudes_cos[harmonic_index]=c
         model_tune.amplitudes_sin[harmonic_index]=s
         err_tune=ModelError(model_tune,data_list)
-        if err_tune.abs<err_best.abs:
+        if max(err_tune.max,math.fabs(err_tune.min))<max(err_best.max,math.fabs(err_best.min)):
+#        if err_tune.max<=err_best.max and err_tune.min>=err_best.min:
+#        if err_tune.var<err_best.var:
+#        if err_tune.abs<err_best.abs:
             model_best=model_tune
             err_best=err_tune
     
-    return model_best 
+    return model_best,err_best

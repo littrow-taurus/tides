@@ -17,6 +17,8 @@ from pathlib import Path
 import random
 from models import ModelError
 import matplotlib.pyplot as plt
+import copy
+from progress.bar import Bar
 
 logger=logging.getLogger(__name__)
 
@@ -399,58 +401,49 @@ class TestCompute(unittest.TestCase):
         logger.info(f"Now: {model.get_height(now):0.3f}")
 
     def test_tune_harmonic_grid(self):
-        t_start=datetime(2024,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
-        t_end=datetime(2025,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
-        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
-
-        model=Model_N3()
-        err=compute.fourier_transform(model,data_ref)
+        # We compute initial model using Fourier using full set of data available
+#        model=Model_N3()
+        model=Model_N10()
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(f"Before tuning:\n{err}")
-        print(model)
 
+        # We do tuning on a restricted set of data
         t_start=datetime(2025,3,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         t_end=datetime(2025,3,5,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
-#        model_tuned=compute.tune_harmonic(model,0,0.2,4,data_ref)
-#        model_tuned=compute.tune_harmonic(model_tuned,1,0.2,4,data_ref)
-#        model_tuned=compute.tune_harmonic(model_tuned,2,0.2,4,data_ref)
-#        model_tuned=compute.tune_harmonic(model_tuned,3,0.2,4,data_ref)
-        model_tuned=compute.tune_harmonic_grid(model,0,0.2,10,data_ref)
-        print(model_tuned)
-        for i in range(2):
-            model_tuned=compute.tune_harmonic_grid(model_tuned,1,0.1,10,data_ref)
-            print(model_tuned)
-            model_tuned=compute.tune_harmonic_grid(model_tuned,2,0.1,10,data_ref)
-            print(model_tuned)
-            model_tuned=compute.tune_harmonic_grid(model_tuned,3,0.1,10,data_ref)
-            print(model_tuned)
-        for i in range(20):
-            model_tuned=compute.tune_harmonic_grid(model,0,0.2,10,data_ref)
-            print(model_tuned)
-            model_tuned=compute.tune_harmonic_grid(model_tuned,1,0.05,10,data_ref)
-            print(model_tuned)
-            model_tuned=compute.tune_harmonic_grid(model_tuned,2,0.05,10,data_ref)
-            print(model_tuned)
-            model_tuned=compute.tune_harmonic_grid(model_tuned,3,0.05,10,data_ref)
-            print(model_tuned)
-        """
-        """
-        err_tuned=ModelError(model_tuned,data_ref)
-        logger.info(f"After tuning:\n{err_tuned}")
 
-        t_start=datetime(2025,3,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
-        t_end=datetime(2025,3,5,hour=0,minute=0,second=0,tzinfo=timezone.utc)
-        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+        # data_mod is reference model's data (initial model before tuning) on the restricted period of work.
         data_mod=[]
-        data_mod_tuned=[]
         for d in data_ref:
             d_mod=Data(d.t,model.get_height(d.t))
             data_mod.append(d_mod)
-            d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
-            data_mod_tuned.append(d_mod_tuned)
+        # Keeping only heights (data reference, and inital model's)
         height_ref=[d.height for d in data_ref]
         height_mod=[d.height for d in data_mod]
+        t_ref=[d.t for d in data_ref]
+
+        heights_sets=[]
+        # Tune harmonic 0 (in Model_N3 it is mean height i.e rotation speed=0°/h)
+        model_tuned=compute.tune_harmonic_grid(model,0,0.2,10,data_ref)
+        data_mod_tuned=[]
+        for d in data_ref:
+            d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
+            data_mod_tuned.append(d_mod_tuned)
         height_mod_tuned=[d.height for d in data_mod_tuned]
+        heights_sets.append(height_mod_tuned)
+
+        N=5
+        # Tune all other harmonics N times
+        for i in range(N):
+            for j in range(1,len(model.harmonics)):
+                model_tuned=compute.tune_harmonic_grid(model_tuned,j,0.1,10,data_ref)
+            data_mod_tuned=[]
+            for d in data_ref:
+                d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
+                data_mod_tuned.append(d_mod_tuned)
+            height_mod_tuned=[d.height for d in data_mod_tuned]
+            # Each step of tuning 3 harmonics we keep a trace of tuning progression
+            heights_sets.append(height_mod_tuned)
         t_ref=[d.t for d in data_ref]
         plt.plot(t_ref,height_ref,label='ref')
         plt.plot(t_ref,height_mod,label='mod')
@@ -458,71 +451,290 @@ class TestCompute(unittest.TestCase):
         plt.legend()
         plt.show()
 
-    def test_tune_harmonic_amp(self):
-        t_start=datetime(2024,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
-        t_end=datetime(2025,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
-        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+        for i in range(N):
+            plt.plot(t_ref,heights_sets[i],label=f"step {i}")
+        plt.legend()
+        plt.show()
 
-        model=Model_N3()
-        err=compute.fourier_transform(model,data_ref)
-        logger.info(f"Before tuning:\n{err}")
-
-        model_tuned=compute.tune_harmonic_amp(model,0,0.2,10,data_ref)
         err_tuned=ModelError(model_tuned,data_ref)
         logger.info(f"After tuning:\n{err_tuned}")
 
+    def test_tune_harmonic_amp(self):
+        # We compute initial model using Fourier using full set of data available
+#        model=Model_N3()
+        model=Model_N10()
+        err=compute.fourier_transform(model,self.data_list)
+        logger.info(f"Before tuning:\n{err}")
+
+        # We do tuning on a restricted set of data
         t_start=datetime(2025,3,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         t_end=datetime(2025,3,5,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+
+        # data_mod is reference model's data (initial model before tuning) on the restricted period of work.
         data_mod=[]
-        data_mod_tuned=[]
         for d in data_ref:
             d_mod=Data(d.t,model.get_height(d.t))
             data_mod.append(d_mod)
-            d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
-            data_mod_tuned.append(d_mod_tuned)
+        # Keeping only heights (data reference, and inital model's)
         height_ref=[d.height for d in data_ref]
         height_mod=[d.height for d in data_mod]
-        height_mod_tuned=[d.height for d in data_mod_tuned]
         t_ref=[d.t for d in data_ref]
-        plt.plot(t_ref,height_ref)
-        plt.plot(t_ref,height_mod)
-        plt.plot(t_ref,height_mod_tuned)
+
+        heights_sets=[]
+        # Tune harmonic 0 (in Model_N3 it is mean height i.e rotation speed=0°/h)
+        model_tuned=compute.tune_harmonic_amp(model,0,0.2,10,data_ref)
+        data_mod_tuned=[]
+        for d in data_ref:
+            d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
+            data_mod_tuned.append(d_mod_tuned)
+        height_mod_tuned=[d.height for d in data_mod_tuned]
+        heights_sets.append(height_mod_tuned)
+
+        N=5
+        # Tune all other harmonics N times
+        for i in range(N):
+            for j in range(1,len(model.harmonics)):
+                model_tuned=compute.tune_harmonic_amp(model_tuned,j,0.1,10,data_ref)
+            data_mod_tuned=[]
+            for d in data_ref:
+                d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
+                data_mod_tuned.append(d_mod_tuned)
+            height_mod_tuned=[d.height for d in data_mod_tuned]
+            # Each step of tuning 3 harmonics we keep a trace of tuning progression
+            heights_sets.append(height_mod_tuned)
+        t_ref=[d.t for d in data_ref]
+        plt.plot(t_ref,height_ref,label='ref')
+        plt.plot(t_ref,height_mod,label='mod')
+        plt.plot(t_ref,height_mod_tuned,label='tuned')
+        plt.legend()
         plt.show()
+
+        for i in range(N):
+            plt.plot(t_ref,heights_sets[i],label=f"step {i}")
+        plt.legend()
+        plt.show()
+
+        err_tuned=ModelError(model_tuned,data_ref)
+        logger.info(f"After tuning:\n{err_tuned}")
 
     def test_tune_harmonic_ang(self):
-        t_start=datetime(2024,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
-        t_end=datetime(2025,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
-        data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
-
-        model=Model_N3()
-        err=compute.fourier_transform(model,data_ref)
-        err=ModelError(model,data_ref)
+        # We compute initial model using Fourier using full set of data available
+#        model=Model_N3()
+        model=Model_N10()
+        err=compute.fourier_transform(model,self.data_list)
         logger.info(f"Before tuning:\n{err}")
 
-        model_tuned=compute.tune_harmonic_ang(model,0,0.2,10,data_ref)
-
+        # We do tuning on a restricted set of data
         t_start=datetime(2025,3,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         t_end=datetime(2025,3,5,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+
+        # data_mod is reference model's data (initial model before tuning) on the restricted period of work.
+        data_mod=[]
+        for d in data_ref:
+            d_mod=Data(d.t,model.get_height(d.t))
+            data_mod.append(d_mod)
+        # Keeping only heights (data reference, and inital model's)
+        height_ref=[d.height for d in data_ref]
+        height_mod=[d.height for d in data_mod]
+        t_ref=[d.t for d in data_ref]
+
+        heights_sets=[]
+        # Tune harmonic 0 (in Model_N3 it is mean height i.e rotation speed=0°/h)
+        model_tuned=compute.tune_harmonic_ang(model,0,0.2,10,data_ref)
+        data_mod_tuned=[]
+        for d in data_ref:
+            d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
+            data_mod_tuned.append(d_mod_tuned)
+        height_mod_tuned=[d.height for d in data_mod_tuned]
+        heights_sets.append(height_mod_tuned)
+
+        N=5
+        # Tune all other harmonics N times
+        for i in range(N):
+            for j in range(1,len(model.harmonics)):
+                model_tuned=compute.tune_harmonic_ang(model_tuned,j,0.1,10,data_ref)
+            data_mod_tuned=[]
+            for d in data_ref:
+                d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
+                data_mod_tuned.append(d_mod_tuned)
+            height_mod_tuned=[d.height for d in data_mod_tuned]
+            # Each step of tuning 3 harmonics we keep a trace of tuning progression
+            heights_sets.append(height_mod_tuned)
+        t_ref=[d.t for d in data_ref]
+        plt.plot(t_ref,height_ref,label='ref')
+        plt.plot(t_ref,height_mod,label='mod')
+        plt.plot(t_ref,height_mod_tuned,label='tuned')
+        plt.legend()
+        plt.show()
+
+        for i in range(N):
+            plt.plot(t_ref,heights_sets[i],label=f"step {i}")
+        plt.legend()
+        plt.show()
+
         err_tuned=ModelError(model_tuned,data_ref)
         logger.info(f"After tuning:\n{err_tuned}")
 
+    def test_tune_harmonic(self):
+        # Compute model on full data set.
+        model=Model_N10()
+        print("Fourier Model:")
+        err=compute.fourier_transform(model,self.data_list)
+        
+        # Restricted set of data
+        t_start=datetime(2024,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        t_end=datetime(2024,2,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        data_list_limited=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+
+        model_tuned=copy.copy(model)
+        err=ModelError(model_tuned,data_list_limited)
+        print(f"Model:{model_tuned}")
+        print(f"Error:{err}")
+
+        # Do a grid tuning 20%
+        bar=Bar("grid 0.2/10:",max=len(model_tuned.harmonics))
+        for j in range(0,len(model_tuned.harmonics)):
+            model_tuned,err=compute.tune_harmonic_grid(model_tuned,j,0.2,10,data_list_limited)
+            bar.next()
+        bar.finish()
+        print(f"Model:{model_tuned}")
+        print(f"Error:{err}")
+
+        # Do a angle tuning 100%
+        bar=Bar("angle 1.0/20:", max=len(model_tuned.harmonics))
+        for j in range(1,len(model_tuned.harmonics)):
+            model_tuned,err=compute.tune_harmonic_ang(model_tuned,j,1.0,20,data_list_limited)
+            bar.next()
+        bar.finish()
+        print(f"Model:{model_tuned}")
+        print(f"Error:{err}")
+
+        # Do an amplitude tuning 20% 
+        bar = Bar("amplitude 0.2/10:", max=len(model_tuned.harmonics))
+        for j in range(0,len(model_tuned.harmonics)):
+            model_tuned,err=compute.tune_harmonic_amp(model_tuned,j,0.2,10,data_list_limited)
+            bar.next()
+        bar.finish()
+        print(f"Model:{model_tuned}")
+        print(f"Error:{err}")
+
+        # Do a angle tuning 20%
+        bar=Bar("angle 0.2/100:", max=len(model_tuned.harmonics))
+        for j in range(1,len(model_tuned.harmonics)):
+            model_tuned,err=compute.tune_harmonic_ang(model_tuned,j,0.2,10,data_list_limited)
+            bar.next()
+        bar.finish()
+        print(f"Model:{model_tuned}")
+        print(f"Error:{err}")
+
+        # Do an amplitude tuning 10% 
+        bar = Bar("amplitude 0.1/10:", max=len(model_tuned.harmonics))
+        for j in range(0,len(model_tuned.harmonics)):
+            model_tuned,err=compute.tune_harmonic_amp(model_tuned,j,0.1,10,data_list_limited)
+            bar.next()
+        bar.finish()
+        print(f"Model:{model_tuned}")
+        print(f"Error:{err}")
+
+        # Do a grid tuning 10%
+        bar=Bar("grid 0.1/5:",max=len(model_tuned.harmonics))
+        for j in range(0,len(model_tuned.harmonics)):
+            model_tuned,err=compute.tune_harmonic_grid(model_tuned,j,0.1,5,data_list_limited)
+            bar.next()
+        bar.finish()
+        print(f"Model:{model_tuned}")
+        print(f"Error:{err}")
+
+
+
+
+
+        """
+        # Restricted set of data (year 2024)
+        t_start=datetime(2024,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        t_end=datetime(2025,1,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
+        data_list_limited=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
+
+        # Do a grid tuning 20% on all harmonics data set full year (2024) 
+        bar = Bar("2/7 Grid year 2024:", max=len(model_tuned.harmonics))
+        for j in range(0,len(model_tuned.harmonics)):
+            model_tuned,err=compute.tune_harmonic_ang(model_tuned,j,0.2,10,data_list_limited)
+            bar.next()
+        bar.finish()
+        print(f"Error:{err}")
+
+        # Do a angle tuning 100% on all harmonics full data 
+        bar = Bar("3/7 Angular year 2024:", max=len(model_tuned.harmonics))
+        for j in range(1,len(model_tuned.harmonics)):
+            model_tuned,err=compute.tune_harmonic_ang(model_tuned,j,1.0,20,self.data_list)
+            bar.next()
+        bar.finish()
+        err=compute.fourier_transform(model_tuned,self.data_list)
+        print(f"Error:{err}")
+
+        # Do an amplitude tuning 10% on all harmonics full data 
+        bar = Bar("4/7 Amplitude year 2024:", max=len(model_tuned.harmonics))
+        for j in range(0,len(model_tuned.harmonics)):
+            model_tuned,err=compute.tune_harmonic_amp(model_tuned,j,0.1,10,self.data_list)
+            bar.next()
+        bar.finish()
+        err=compute.fourier_transform(model_tuned,self.data_list)
+        print(f"Error:{err}")
+
+        # Do N cycles amp/angle tuning 5% on limited datas
+        N=10
+        bar = Bar("5/7 {N} cycles of amplitude/angular year 2024:", max=N*len(model_tuned.harmonics))
+        for i in range(N):
+            for j in range(1,len(model_tuned.harmonics)):
+                model_tuned,err=compute.tune_harmonic_amp(model_tuned,j,0.05,10,data_list_limited)
+                model_tuned,err=compute.tune_harmonic_ang(model_tuned,j,0.05,10,data_list_limited)
+                bar.next()
+        bar.finish()
+        err=compute.fourier_transform(model_tuned,self.data_list)
+        print(f"Error:{err}")
+
+        # Do N cycles grid tuning 5% on limited datas
+        N=10
+        bar = Bar("6/7 {N} cycles of amplitude/angular year 2024:", max=N*len(model_tuned.harmonics))
+        for i in range(N):
+            for j in range(1,len(model_tuned.harmonics)):
+                model_tuned,err=compute.tune_harmonic_grid(model_tuned,j,0.05,10,data_list_limited)
+                bar.next()
+        bar.finish()
+        err=compute.fourier_transform(model_tuned,self.data_list)
+        print(f"Error:{err}")
+
+        # Grid tuning 10% on whole data
+        print("7/7 Amplitude year 2024:")
+        model_tuned,err=compute.tune_harmonic_grid(model_tuned,j,0.1,10,self.data_list)
+        print(f"Error:{err}")
+        """
+
+
+
+
+
+        # Plot a selection of data
+        # We do tuning on a restricted set of data
         t_start=datetime(2025,3,1,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         t_end=datetime(2025,3,5,hour=0,minute=0,second=0,tzinfo=timezone.utc)
         data_ref=[d for d in self.data_list if d.t>=t_start and d.t<t_end]
-        data_mod=[]
         data_mod_tuned=[]
+        data_mod=[]
         for d in data_ref:
             d_mod=Data(d.t,model.get_height(d.t))
             data_mod.append(d_mod)
             d_mod_tuned=Data(d.t,model_tuned.get_height(d.t))
             data_mod_tuned.append(d_mod_tuned)
+        t_ref=[d.t for d in data_ref]
         height_ref=[d.height for d in data_ref]
         height_mod=[d.height for d in data_mod]
         height_mod_tuned=[d.height for d in data_mod_tuned]
-        t_ref=[d.t for d in data_ref]
-        plt.plot(t_ref,height_ref)
-        plt.plot(t_ref,height_mod)
-        plt.plot(t_ref,height_mod_tuned)
+        plt.plot(t_ref,height_ref,label='ref')
+        plt.plot(t_ref,height_mod,label='mod')
+        plt.plot(t_ref,height_mod_tuned,label='tuned')
+        plt.legend()
         plt.show()
+

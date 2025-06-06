@@ -1,12 +1,17 @@
 # Evolutions
 
-- 2025-06-03 0.0.6  
-  Save model.
+- 0.0.7
+  Tuning method grid, amp.  
+  Cloning Harmonic, Model.  
+  Name harmonics.  
+  
+- 2025-06-04 0.0.6  
+  Save model.  
   
 - 2025-06-03 0.0.5  
-  Bugfix in Model's height computing.
-  Error measurement.
-  Data reader.
+  Bugfix in Model's height computing.  
+  Error measurement.  
+  Data reader.  
 
 - 2025-06-02 0.0.4  
   Module datas.  

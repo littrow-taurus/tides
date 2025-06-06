@@ -38,7 +38,7 @@ echo "export PYTHONPATH=\"${_project_root}/src\":\"${_project_root}/tst\"" >> "$
 ## Start dev
 ```bash
 . "${_project_root}/.venv/Scripts/activate"
-pip install -r "${_project_root}/requirements.txt"
+python -m pip install -r "${_project_root}/requirements.txt"
 ```
 
 ## Stop dev
@@ -55,6 +55,6 @@ python -m unittest <test_module.test_class.test_method>
 
 ## Save dependencies
 ```bash
-pip install <something>
+python -m pip install <something>
 pip freeze -l > "${_project_root}/requirements.txt"
 ```
